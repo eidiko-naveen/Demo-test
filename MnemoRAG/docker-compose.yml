@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: mnemorag-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mnemorag
+      POSTGRES_PASSWORD: mnemorag
+      POSTGRES_DB: mnemorag
+    ports:
+      - "5433:5432"
+    volumes:
+      - mnemorag_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mnemorag -d mnemorag"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: mnemorag-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
+      DATABASE_URL: postgresql+asyncpg://mnemorag:mnemorag@postgres:5432/mnemorag
+      DEFAULT_MEMORY_MODE: ${DEFAULT_MEMORY_MODE:-hybrid}
+      BUFFER_WINDOW_SIZE: ${BUFFER_WINDOW_SIZE:-6}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  frontend:
+    build: ./frontend
+    container_name: mnemorag-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      BACKEND_URL: http://backend:8000
+    ports:
+      - "8501:8501"
+
+volumes:
+  mnemorag_pgdata:
