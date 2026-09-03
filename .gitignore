@@ -1,0 +1,18 @@
+
+# Environment/secrets
+.env
+.env.*
+!.env.example
+
+# OAuth credentials
+credentials/
+**/credentials/
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# OAuth credentials
+credentials/
+**/credentials/

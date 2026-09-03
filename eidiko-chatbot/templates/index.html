@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="theme-color" content="#0b1020">
+
+    <title>EIDIKO Internal Assistant</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+<div class="app-shell">
+
+    <!-- ================= SIDEBAR ================= -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-mark">
+
+                <img
+                    src="{{ url_for('static', filename='logo.jpg') }}"
+                    alt="EIDIKO"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"
+                >
+
+                <span class="brand-fallback">E</span>
+
+            </div>
+
+            <div>
+                <div class="brand-name">EIDIKO</div>
+                <div class="brand-subtitle">
+                    Internal Assistant
+                </div>
+            </div>
+
+        </div>
+
+
+        <button class="new-chat" id="newChatBtn">
+
+            <span class="icon">＋</span>
+
+            New conversation
+
+        </button>
+
+
+        <!-- SEARCH SOURCES -->
+
+        <div class="sidebar-section">
+
+            <div class="section-label">
+                Search across
+            </div>
+
+            <div class="source-list">
+
+                <div class="source-item">
+
+                    <span class="source-icon">M</span>
+
+                    <span>Gmail</span>
+
+                    <span class="source-dot"></span>
+
+                </div>
+
+
+                <div class="source-item">
+
+                    <span class="source-icon">D</span>
+
+                    <span>Google Drive</span>
+
+                    <span class="source-dot"></span>
+
+                </div>
+
+
+                <div class="source-item">
+
+                    <span class="source-icon">C</span>
+
+                    <span>Google Calendar</span>
+
+                    <span class="source-dot"></span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="sidebar-spacer"></div>
+
+
+        <!-- PRIVACY -->
+
+        <div class="privacy-card">
+
+            <div class="privacy-icon">
+                ✓
+            </div>
+
+            <div>
+
+                <strong>
+                    Private by design
+                </strong>
+
+                <p>
+                    Read-only Google access.
+                    Sensitive values stay redacted.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <button
+            class="disconnect-btn hidden"
+            id="disconnectBtn"
+        >
+            Disconnect Google
+        </button>
+
+
+        <div class="sidebar-footer">
+            EIDIKO • Local workspace
+        </div>
+
+    </aside>
+
+
+    <!-- ================= MAIN ================= -->
+
+    <main class="main">
+
+        <!-- TOP BAR -->
+
+        <header class="topbar">
+
+            <div>
+
+                <div class="eyebrow">
+                    INTERNAL AI WORKSPACE
+                </div>
+
+                <h1>
+                    Search your work, naturally.
+                </h1>
+
+            </div>
+
+
+            <div class="connection-area">
+
+                <div class="connection-status">
+
+                    <span
+                        class="status-dot"
+                        id="statusDot"
+                    ></span>
+
+                    <span id="statusText">
+                        Checking connection…
+                    </span>
+
+                </div>
+
+
+                <button
+                    class="connect-btn"
+                    id="connectBtn"
+                >
+
+                    <span class="google-g">
+                        G
+                    </span>
+
+                    Connect Google
+
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- ================= WORKSPACE ================= -->
+
+        <section
+            class="workspace"
+            id="workspace"
+        >
+
+            <!-- HERO -->
+
+            <div
+                class="hero"
+                id="hero"
+            >
+
+                <div class="hero-badge">
+                    ✦ EIDIKO AI
+                </div>
+
+
+                <h2>
+                    One place for Gmail,
+                    <br>
+                    Drive & Calendar.
+                </h2>
+
+
+                <p>
+                    Ask in plain language.
+                    Find emails, documents and meetings
+                    without switching between apps.
+                </p>
+
+
+                <!-- QUICK ACTIONS -->
+
+                <div class="quick-grid">
+
+
+                    <button
+                        class="quick-card"
+                        data-query="Find my latest emails"
+                    >
+
+                        <span class="quick-icon mail">
+                            ✉
+                        </span>
+
+                        <span>
+
+                            <strong>
+                                Search Gmail
+                            </strong>
+
+                            <small>
+                                Find an email or attachment
+                            </small>
+
+                        </span>
+
+                        <span class="arrow">
+                            →
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="quick-card"
+                        data-query="Find my project documents"
+                    >
+
+                        <span class="quick-icon drive">
+                            ▣
+                        </span>
+
+                        <span>
+
+                            <strong>
+                                Search Drive
+                            </strong>
+
+                            <small>
+                                Locate a document or file
+                            </small>
+
+                        </span>
+
+                        <span class="arrow">
+                            →
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="quick-card"
+                        data-query="What meetings do I have today?"
+                    >
+
+                        <span class="quick-icon calendar">
+                            □
+                        </span>
+
+                        <span>
+
+                            <strong>
+                                Check Calendar
+                            </strong>
+
+                            <small>
+                                See today's meetings
+                            </small>
+
+                        </span>
+
+                        <span class="arrow">
+                            →
+                        </span>
+
+                    </button>
+
+
+                    <button
+                        class="quick-card"
+                        data-query="What is my next meeting?"
+                    >
+
+                        <span class="quick-icon spark">
+                            ✦
+                        </span>
+
+                        <span>
+
+                            <strong>
+                                Ask anything
+                            </strong>
+
+                            <small>
+                                Search across connected sources
+                            </small>
+
+                        </span>
+
+                        <span class="arrow">
+                            →
+                        </span>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- CHAT -->
+
+            <div
+                class="chat-panel hidden"
+                id="chatPanel"
+            >
+
+                <div
+                    class="messages"
+                    id="messages"
+                ></div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= COMPOSER ================= -->
+
+        <div class="composer-wrap">
+
+            <form
+                class="composer"
+                id="chatForm"
+            >
+
+                <div class="composer-icon">
+                    ✦
+                </div>
+
+
+                <input
+                    id="messageInput"
+                    autocomplete="off"
+                    placeholder="Ask about your emails, files or meetings…"
+                    aria-label="Message"
+                >
+
+
+                <button
+                    type="submit"
+                    class="send-btn"
+                    id="sendBtn"
+                    aria-label="Send"
+                >
+                    ↑
+                </button>
+
+            </form>
+
+
+            <div class="composer-note">
+
+                EIDIKO searches metadata only and keeps
+                sensitive information redacted.
+
+            </div>
+
+        </div>
+
+    </main>
+
+</div>
+
+
+<!-- TOAST -->
+
+<div
+    class="toast"
+    id="toast"
+></div>
+
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+
+</body>
+</html>

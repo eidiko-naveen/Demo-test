@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: {{ include "eidiko-chatbot.fullname" . }}-config
+
+  labels:
+    {{- include "eidiko-chatbot.labels" . | nindent 4 }}
+
+data:
+
+  PORT: {{ .Values.config.PORT | quote }}
+
+  FLASK_DEBUG: {{ .Values.config.FLASK_DEBUG | quote }}
+
+  PYTHONUNBUFFERED: {{ .Values.config.PYTHONUNBUFFERED | quote }}

@@ -1,0 +1,90 @@
+name: ocp-monitor
+
+x-app-common: &app-common
+  image: ${IMAGE_REGISTRY:-local}/ocp-monitor:${IMAGE_TAG:-dev}
+  # Match the host owner so a mode-0600 kubeconfig remains readable without
+  # weakening its permissions. Override LOCAL_UID when the host UID is not 1000.
+  user: "${LOCAL_UID:-1000}:0"
+  build:
+    context: .
+    args:
+      APP_VERSION: ${IMAGE_TAG:-dev}
+  env_file:
+    - .env
+  environment:
+    HOME: /tmp
+    POSTGRES_HOST: postgres
+    POSTGRES_PORT: "5432"
+    KUBECONFIG_PATH: /var/run/ocp-monitor/kubeconfig
+    LOG_FORMAT: console
+    XDG_CACHE_HOME: /cache
+    HF_HOME: /cache/huggingface
+  volumes:
+    - ${KUBECONFIG_FILE:-./kubeconfig}:/var/run/ocp-monitor/kubeconfig:ro
+    - model-cache:/cache
+  # Some internal DNS servers return this private record in a form that musl
+  # accepts but glibc rejects. Keep the explicit mapping configurable so the
+  # scheduler can reliably reach the API without disabling target validation.
+  extra_hosts:
+    - "${OCP_API_HOSTNAME:-api.ocp.eidikointernal.com}:${OCP_API_HOST_IP:-192.168.1.169}"
+  depends_on:
+    postgres:
+      condition: service_healthy
+  restart: unless-stopped
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ocp_monitor}
+      POSTGRES_USER: ${POSTGRES_USER:-ocp_agent}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      # Local-only access for pgAdmin and other host database clients.
+      - "127.0.0.1:${POSTGRES_PUBLISHED_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  scheduler:
+    <<: *app-common
+    command: ["python", "scheduler.py"]
+    healthcheck:
+      test: ["CMD", "python", "-m", "agent.healthcheck", "liveness"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+  dashboard:
+    <<: *app-common
+    command: ["python", "run_streamlit.py"]
+    environment:
+      HOME: /tmp
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      KUBECONFIG_PATH: /var/run/ocp-monitor/kubeconfig
+      DASHBOARD_HOST: 0.0.0.0
+      DASHBOARD_PORT: "8501"
+      LOG_FORMAT: console
+    ports:
+      - "${DASHBOARD_PUBLISHED_PORT:-8501}:8501"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+volumes:
+  postgres-data:
+  model-cache:

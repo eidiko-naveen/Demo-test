@@ -1,0 +1,181 @@
+# ============================================================
+# EIDIKO CHATBOT - HELM VALUES
+# ============================================================
+
+replicaCount: 1
+
+# ============================================================
+# C07 - Container image
+# ============================================================
+
+image:
+  repository: naveeneidiko/eidiko-chatbot
+  tag: "1.0"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+# ============================================================
+# C14 - Application port
+# ============================================================
+
+containerPort: 5000
+
+# ============================================================
+# Service
+# ============================================================
+
+service:
+  type: ClusterIP
+  port: 5000
+  targetPort: http
+
+# ============================================================
+# C12 / C13 - Application configuration
+# ============================================================
+
+config:
+
+  PORT: "5000"
+
+  HOST: "0.0.0.0"
+
+  FLASK_DEBUG: "false"
+
+  PYTHONUNBUFFERED: "1"
+
+  PYTHONDONTWRITEBYTECODE: "1"
+
+  # IMPORTANT:
+  # google_client.py currently expects:
+  # /app/credentials/credentials.json
+
+  GOOGLE_CREDENTIALS_FILE: "/app/credentials/credentials.json"
+
+  TOKEN_FILE: "/data/token.json"
+
+# ============================================================
+# C11 - Anthropic API Secret
+# ============================================================
+
+secret:
+
+  create: false
+
+  existingSecret: eidiko-chatbot-secret
+
+# ============================================================
+# C11 - Google credentials Secret
+# ============================================================
+
+googleCredentials:
+
+  enabled: true
+
+  secretName: eidiko-google-credentials
+
+  # Mount the Secret exactly where google_client.py expects it.
+  mountPath: /app/credentials
+
+# ============================================================
+# OpenShift Route
+# ============================================================
+
+route:
+
+  enabled: true
+
+  host: ""
+
+  tls:
+    enabled: true
+
+# ============================================================
+# C19-C22 - Resources
+# ============================================================
+
+
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+# ============================================================
+# C16-C18 - Probes
+# ============================================================
+
+probes:
+
+  liveness:
+    enabled: true
+    path: /
+    port: http
+    initialDelaySeconds: 30
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readiness:
+    enabled: true
+    path: /
+    port: http
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  startup:
+    enabled: true
+    path: /
+    port: http
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+
+# ============================================================
+# C08 - OpenShift arbitrary UID
+# ============================================================
+
+podSecurityContext:
+
+  runAsNonRoot: true
+
+  seccompProfile:
+    type: RuntimeDefault
+
+# ============================================================
+# C09 - Container security
+# ============================================================
+
+containerSecurityContext:
+
+  privileged: false
+
+  allowPrivilegeEscalation: false
+
+  capabilities:
+    drop:
+      - ALL
+
+  seccompProfile:
+    type: RuntimeDefault
+
+# ============================================================
+# C23 - Persistent storage
+# ============================================================
+
+persistence:
+
+  enabled: true
+
+  storageClass: ""
+
+  accessMode: ReadWriteOnce
+
+  size: 5Gi
+
+  mountPath: /data

@@ -1,0 +1,164 @@
+# ============================================================
+# EIDIKO CHATBOT - HELM VALUES
+# ============================================================
+
+replicaCount: 1
+
+# ============================================================
+# C07 - Image stored in approved registry
+# ============================================================
+
+image:
+  repository: naveeneidiko/eidiko-chatbot
+  tag: "1.0"
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+
+# ============================================================
+# C14 - Application port
+#
+# Flask application listens on 5000
+# ============================================================
+
+containerPort: 5000
+
+service:
+  type: ClusterIP
+  port: 5000
+  targetPort: 5000
+
+
+# ============================================================
+# C13 - ConfigMap configuration
+# ============================================================
+
+config:
+  PORT: "5000"
+  FLASK_DEBUG: "false"
+  PYTHONUNBUFFERED: "1"
+
+
+# ============================================================
+# C11 - Kubernetes/OpenShift Secret
+#
+# DO NOT commit the real API key to Git.
+# Prefer an existing OpenShift Secret for production.
+# ============================================================
+
+secret:
+  create: false
+  existingSecret: eidiko-chatbot-secret
+
+
+# ============================================================
+# OpenShift Route
+# ============================================================
+
+route:
+  enabled: true
+
+  # Leave empty and OpenShift will generate the hostname.
+  host: ""
+
+  tls:
+    enabled: true
+
+
+# ============================================================
+# C19 - CPU request
+# C20 - Memory request
+# C21 - CPU limit
+# C22 - Memory limit
+# ============================================================
+
+resources:
+
+  requests:
+    cpu: "250m"
+    memory: "256Mi"
+
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+
+# ============================================================
+# C16 - Liveness probe
+# C17 - Readiness probe
+# C18 - Startup probe
+# ============================================================
+
+probes:
+
+  liveness:
+    enabled: true
+    path: /
+    port: 5000
+    initialDelaySeconds: 30
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readiness:
+    enabled: true
+    path: /
+    port: 5000
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  startup:
+    enabled: true
+    path: /
+    port: 5000
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 30
+
+
+# ============================================================
+# C08 - Run as non-root / arbitrary UID
+#
+# IMPORTANT:
+# Do NOT specify runAsUser.
+# OpenShift assigns the UID.
+# ============================================================
+
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+
+# ============================================================
+# Container security
+# ============================================================
+
+containerSecurityContext:
+
+  allowPrivilegeEscalation: false
+
+  capabilities:
+    drop:
+      - ALL
+
+  seccompProfile:
+    type: RuntimeDefault
+
+
+# ============================================================
+# C23 - Persistent storage
+#
+# Eidiko Chatbot is stateless.
+# Persistent storage is not required.
+# ============================================================
+
+persistence:
+  enabled: false
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 5Gi
+  mountPath: /data

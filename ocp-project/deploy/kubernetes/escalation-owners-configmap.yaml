@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ocp-monitor-escalation-owners
+  namespace: ocp-monitor
+data:
+  escalation_owners.json: |
+    {
+      "apic": ["kousikmokkarala.eidiko@gmail.com"],
+      "appconnect": ["yash.eidiko@gmail.com"],
+      "datapower": ["divvijayaprakash.eidiko@gmail.com"],
+      "cp4i": ["kalyanchegondi.eidiko@gmail.com"]
+    }

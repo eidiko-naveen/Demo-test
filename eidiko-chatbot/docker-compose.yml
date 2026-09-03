@@ -1,0 +1,158 @@
+services:
+
+  eidiko-chatbot:
+
+    # ========================================================
+    # C06 - Build container image
+    # ========================================================
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    image: naveeneidiko/eidiko-chatbot:1.0
+
+    container_name: eidiko-chatbot2
+
+    # ========================================================
+    # C14 - Configurable application port
+    #
+    # Application/container port = 5000
+    #
+    # Host port can be changed in .env:
+    #
+    # HOST_PORT=5000
+    #
+    # Example:
+    # HOST_PORT=8080
+    #
+    # Then:
+    # http://localhost:8080
+    # ========================================================
+
+    ports:
+      - "${HOST_PORT:-5000}:5000"
+
+    # ========================================================
+    # C08 - Non-root / OpenShift compatible
+    #
+    # No fixed USER is specified.
+    # OpenShift can assign an arbitrary UID.
+    # ========================================================
+
+    # ========================================================
+    # C09 - No privileged container
+    # ========================================================
+
+    privileged: false
+
+    security_opt:
+      - no-new-privileges:true
+
+    # ========================================================
+    # C10 / C12 - Environment variables
+    #
+    # Local configuration comes from .env.
+    #
+    # DO NOT commit .env to Git.
+    # ========================================================
+
+    env_file:
+      - .env
+
+    environment:
+
+      HOST: "${HOST:-0.0.0.0}"
+
+      PORT: "${PORT:-5000}"
+
+      FLASK_DEBUG: "${FLASK_DEBUG:-0}"
+
+      PYTHONUNBUFFERED: "1"
+
+      PYTHONDONTWRITEBYTECODE: "1"
+
+      PYTHONIOENCODING: "UTF-8"
+
+      # ======================================================
+      # Google credentials
+      #
+      # google_client.py expects:
+      #
+      # /app/credentials/credentials.json
+      #
+      # Therefore the Secret/file is mounted at this path.
+      # ======================================================
+
+      GOOGLE_CREDENTIALS_FILE: "/app/credentials/credentials.json"
+
+      # ======================================================
+      # OAuth token
+      # ======================================================
+
+      TOKEN_FILE: "${TOKEN_FILE:-/data/token.json}"
+
+      # ======================================================
+      # C10 - API credential
+      #
+      # Value comes from .env.
+      # ======================================================
+
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+
+    # ========================================================
+    # C10 - Google credentials
+    #
+    # credentials.json is NOT copied into the image.
+    #
+    # It is mounted at runtime and read-only.
+    #
+    # Local file:
+    # ./credentials/credentials.json
+    #
+    # Container file:
+    # /app/credentials/credentials.json
+    # ========================================================
+
+    volumes:
+
+      - ./credentials/credentials.json:/app/credentials/credentials.json:ro
+
+      # ======================================================
+      # C23 - Persistent OAuth token
+      # ======================================================
+
+      - eidiko-token-data:/data
+
+    # ========================================================
+    # C24 - Logs to stdout/stderr
+    # ========================================================
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # ========================================================
+    # C25 - Graceful shutdown
+    # ========================================================
+
+    stop_signal: SIGTERM
+
+    stop_grace_period: 30s
+
+    # ========================================================
+    # Restart policy
+    # ========================================================
+
+    restart: unless-stopped
+
+
+# ============================================================
+# C23 - Persistent storage
+# ============================================================
+
+volumes:
+
+  eidiko-token-data:

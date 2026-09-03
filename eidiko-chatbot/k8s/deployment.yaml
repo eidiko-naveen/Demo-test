@@ -1,0 +1,189 @@
+# ============================================================
+# EIDIKO Internal Assistant — Kubernetes Deployment
+# Controls: C05, C06, C07, C08, C09, C10, C11, C12,
+#           C13, C14, C15, C16, C17, C18, C19, C20,
+#           C21, C22, C23
+#
+# Application Metadata (DevOps requirement):
+#   app-name        : EIDIKO Internal Assistant
+#   app-owner       : Sumith
+#   business-criticality: High (P2)
+# ============================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eidiko-chatbot
+  namespace: eidiko
+  labels:
+    app: eidiko-chatbot
+    version: "1.0.0"
+    component: web
+    # ── DevOps Required Metadata ──────────────────────────
+    app-name: "EIDIKO-Internal-Assistant"
+    app-owner: "Sumith"
+    business-criticality: "High-P2"
+  annotations:
+    app-name: "EIDIKO Internal Assistant"
+    app-owner: "Sumith"
+    business-criticality: "High (P2)"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eidiko-chatbot
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+
+  template:
+    metadata:
+      labels:
+        app: eidiko-chatbot
+        version: "1.0.0"
+        # ── DevOps Required Metadata ────────────────────
+        app-name: "EIDIKO-Internal-Assistant"
+        app-owner: "Sumith"
+        business-criticality: "High-P2"
+      annotations:
+        app-name: "EIDIKO Internal Assistant"
+        app-owner: "Sumith"
+        business-criticality: "High (P2)"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+
+      terminationGracePeriodSeconds: 60
+
+      containers:
+        - name: eidiko-chatbot
+          image: image-registry.openshift-image-registry.svc:5000/eidiko/eidiko-chatbot:1.0.0
+          imagePullPolicy: Always
+
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+
+          env:
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: eidiko-config
+                  key: PORT
+            - name: GUNICORN_WORKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: eidiko-config
+                  key: GUNICORN_WORKERS
+            - name: GUNICORN_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: eidiko-config
+                  key: GUNICORN_TIMEOUT
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: eidiko-config
+                  key: LOG_LEVEL
+            - name: FLASK_DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: eidiko-config
+                  key: FLASK_DEBUG
+            - name: MAX_RESULTS
+              valueFrom:
+                configMapKeyRef:
+                  name: eidiko-config
+                  key: MAX_RESULTS
+            - name: GOOGLE_CREDENTIALS_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: eidiko-config
+                  key: GOOGLE_CREDENTIALS_PATH
+            - name: GOOGLE_TOKEN_PATH
+              valueFrom:
+                configMapKeyRef:
+                  name: eidiko-config
+                  key: GOOGLE_TOKEN_PATH
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: eidiko-secrets
+                  key: anthropic-api-key
+            - name: FLASK_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: eidiko-secrets
+                  key: flask-secret-key
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+          livenessProbe:
+            httpGet:
+              path: /api/status
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+
+          readinessProbe:
+            httpGet:
+              path: /api/status
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            successThreshold: 1
+
+          startupProbe:
+            httpGet:
+              path: /api/status
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 12
+
+          volumeMounts:
+            - name: token-storage
+              mountPath: /app/data
+            - name: google-credentials
+              mountPath: /app/credentials
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+
+      volumes:
+        - name: token-storage
+          persistentVolumeClaim:
+            claimName: eidiko-token-pvc
+        - name: google-credentials
+          secret:
+            secretName: eidiko-secrets
+            items:
+              - key: google-credentials-json
+                path: credentials.json
+            defaultMode: 0400
+        - name: tmp
+          emptyDir: {}

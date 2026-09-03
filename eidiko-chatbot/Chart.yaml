@@ -1,0 +1,6 @@
+apiVersion: v2
+name: eidiko-chatbot
+description: Helm chart for EIDIKO Chatbot
+type: application
+version: 1.0.0
+appVersion: "1.0"
