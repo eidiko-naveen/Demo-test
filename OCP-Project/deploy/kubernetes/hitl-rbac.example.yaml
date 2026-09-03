@@ -1,0 +1,26 @@
+# Do not apply this file during dry-run testing. It is intentionally excluded
+# from kustomization.yaml. Review and apply only when live execution is approved.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ocp-monitor-hitl-deployment-restart
+  namespace: eidiko-chatbot
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    resourceNames: ["bankingchatbot"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ocp-monitor-hitl-deployment-restart
+  namespace: eidiko-chatbot
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: ocp-monitor-hitl-deployment-restart
+subjects:
+  - kind: ServiceAccount
+    name: ocp-monitor
+    namespace: ocp-monitor

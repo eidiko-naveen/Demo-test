@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - serviceaccount.yaml
+  - rbac.yaml
+  - configmap.yaml
+  - escalation-owners-configmap.yaml
+  - scheduler-deployment.yaml
+  - dashboard-deployment.yaml
+  - dashboard-service.yaml
+  - dashboard-route.yaml
+images:
+  - name: ocp-monitor
+    newName: approved-registry.example.com/platform/ocp-monitor
+    newTag: 1.0.0

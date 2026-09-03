@@ -1,0 +1,38 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: ocp-monitor-readonly
+rules:
+  - apiGroups: [""]
+    resources: ["nodes", "pods", "persistentvolumeclaims"]
+    verbs: ["get", "list"]
+  # TLS certificate expiry monitoring requires reading TLS Secret payloads.
+  # Remove this rule and disable certificate collection if policy forbids it.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "list"]
+  - apiGroups: ["config.openshift.io"]
+    resources: ["clusteroperators"]
+    verbs: ["get", "list"]
+  - apiGroups: ["machineconfiguration.openshift.io"]
+    resources: ["machineconfigpools"]
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list"]
+  - apiGroups: ["integration.ibm.com"]
+    resources: ["platformnavigators"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: ocp-monitor-readonly
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: ocp-monitor-readonly
+subjects:
+  - kind: ServiceAccount
+    name: ocp-monitor
+    namespace: ocp-monitor

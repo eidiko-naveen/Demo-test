@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ocp-monitor-scheduler
+  namespace: ocp-monitor
+  labels:
+    app.kubernetes.io/name: ocp-monitor
+    app.kubernetes.io/component: scheduler
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ocp-monitor
+      app.kubernetes.io/component: scheduler
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ocp-monitor
+        app.kubernetes.io/component: scheduler
+    spec:
+      serviceAccountName: ocp-monitor
+      automountServiceAccountToken: true
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: scheduler
+          image: ocp-monitor:1.0.0
+          imagePullPolicy: IfNotPresent
+          command: ["python", "scheduler.py"]
+          envFrom:
+            - configMapRef:
+                name: ocp-monitor-config
+            - secretRef:
+                name: ocp-monitor-secrets
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: "2"
+              memory: 4Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          startupProbe:
+            exec:
+              command: ["python", "-m", "agent.healthcheck", "startup"]
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            exec:
+              command: ["python", "-m", "agent.healthcheck", "readiness"]
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command: ["python", "-m", "agent.healthcheck", "liveness"]
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          volumeMounts:
+            - name: runtime
+              mountPath: /tmp
+            - name: escalation-owners
+              mountPath: /etc/ocp-monitor
+              readOnly: true
+      volumes:
+        - name: runtime
+          emptyDir:
+            sizeLimit: 2Gi
+        - name: escalation-owners
+          configMap:
+            name: ocp-monitor-escalation-owners
+            items:
+              - key: escalation_owners.json
+                path: escalation_owners.json
