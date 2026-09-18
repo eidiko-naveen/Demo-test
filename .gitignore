@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Project/runtime data
+.data/
+.pytest_cache/
+*.log
+wget-log
+X1.zip
+
+# OS/editor
+.DS_Store
+.idea/
+.vscode/
