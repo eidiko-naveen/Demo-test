@@ -1,0 +1,232 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: {{ include "eidiko-chatbot.fullname" . }}
+
+  labels:
+    {{- include "eidiko-chatbot.labels" . | nindent 4 }}
+
+spec:
+
+  replicas: {{ .Values.replicaCount }}
+  strategy:
+    type: Recreate
+
+  selector:
+    matchLabels:
+      {{- include "eidiko-chatbot.selectorLabels" . | nindent 6 }}
+
+  template:
+
+    metadata:
+      labels:
+        {{- include "eidiko-chatbot.selectorLabels" . | nindent 8 }}
+
+    spec:
+
+      # ======================================================
+      # C08 - OpenShift arbitrary non-root UID
+      # ======================================================
+
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+
+      terminationGracePeriodSeconds: 30
+
+      containers:
+
+        - name: eidiko-chatbot
+
+          # ==================================================
+          # C07 - Container image
+          # ==================================================
+
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          # ==================================================
+          # C14 - Application port
+          # ==================================================
+
+          ports:
+            - name: http
+              containerPort: {{ .Values.containerPort }}
+              protocol: TCP
+
+          # ==================================================
+          # C12 / C13 - ConfigMap
+          # ==================================================
+
+          envFrom:
+            - configMapRef:
+                name: {{ include "eidiko-chatbot.fullname" . }}-config
+
+          # ==================================================
+          # C11 - Anthropic API Secret
+          # ==================================================
+
+          env:
+
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secret.existingSecret }}
+                  key: ANTHROPIC_API_KEY
+                  optional: false
+
+          # ==================================================
+          # C09 - Container security
+          # ==================================================
+
+          securityContext:
+
+            privileged: false
+
+            allowPrivilegeEscalation: false
+
+            capabilities:
+              {{- toYaml .Values.containerSecurityContext.capabilities | nindent 14 }}
+
+            seccompProfile:
+              {{- toYaml .Values.containerSecurityContext.seccompProfile | nindent 14 }}
+
+          # ==================================================
+          # C19-C22 - Resources
+          # ==================================================
+
+          resources:
+
+            requests:
+              cpu: {{ .Values.resources.requests.cpu | quote }}
+              memory: {{ .Values.resources.requests.memory | quote }}
+
+            limits:
+              cpu: {{ .Values.resources.limits.cpu | quote }}
+              memory: {{ .Values.resources.limits.memory | quote }}
+
+          # ==================================================
+          # Volume mounts
+          # ==================================================
+
+          volumeMounts:
+
+            # ==================================================
+            # C23 - Persistent application data
+            # ==================================================
+
+            {{- if .Values.persistence.enabled }}
+
+            - name: eidiko-data
+              mountPath: {{ .Values.persistence.mountPath }}
+
+            {{- end }}
+
+            # ==================================================
+            # C11 - Google credentials
+            #
+            # The Secret is mounted at:
+            #
+            # /app/credentials/credentials.json
+            #
+            # This matches google_client.py:
+            #
+            # BASE_DIR / "credentials" / "credentials.json"
+            # ==================================================
+
+            {{- if .Values.googleCredentials.enabled }}
+
+            - name: google-credentials
+              mountPath: {{ .Values.googleCredentials.mountPath }}
+              readOnly: true
+
+            {{- end }}
+
+          # ==================================================
+          # C18 - Startup probe
+          # ==================================================
+
+          {{- if .Values.probes.startup.enabled }}
+
+          startupProbe:
+
+            httpGet:
+              path: {{ .Values.probes.startup.path }}
+              port: {{ .Values.probes.startup.port }}
+
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+
+          {{- end }}
+
+          # ==================================================
+          # C17 - Readiness probe
+          # ==================================================
+
+          {{- if .Values.probes.readiness.enabled }}
+
+          readinessProbe:
+
+            httpGet:
+              path: {{ .Values.probes.readiness.path }}
+              port: {{ .Values.probes.readiness.port }}
+
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+
+          {{- end }}
+
+          # ==================================================
+          # C16 - Liveness probe
+          # ==================================================
+
+          {{- if .Values.probes.liveness.enabled }}
+
+          livenessProbe:
+
+            httpGet:
+              path: {{ .Values.probes.liveness.path }}
+              port: {{ .Values.probes.liveness.port }}
+
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+
+          {{- end }}
+
+      # ======================================================
+      # Volumes
+      # ======================================================
+
+      volumes:
+
+        # ====================================================
+        # C23 - Persistent storage
+        # ====================================================
+
+        {{- if .Values.persistence.enabled }}
+
+        - name: eidiko-data
+
+          persistentVolumeClaim:
+            claimName: {{ include "eidiko-chatbot.fullname" . }}-data
+
+        {{- end }}
+
+        # ====================================================
+        # C11 - Google credentials Secret
+        # ====================================================
+
+        {{- if .Values.googleCredentials.enabled }}
+
+        - name: google-credentials
+
+          secret:
+            secretName: {{ .Values.googleCredentials.secretName }}
+
+        {{- end }}

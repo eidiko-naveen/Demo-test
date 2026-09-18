@@ -1,0 +1,39 @@
+
+# Environment/secrets
+.env
+.env.*
+!.env.example
+
+# OAuth credentials
+credentials/
+**/credentials/
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+<<<<<<< Updated upstream
+# OAuth credentials
+credentials/
+**/credentials/
+=======
+# Session audit logs or local data
+data/
+*.log
+eidiko_mcp_audit_log.json
+*.zip
+
+>>>>>>> Stashed changes
+
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Python generated files
+__pycache__/
+*.py[cod]
+
+# Temporary/generated staging
+.zip_staging/

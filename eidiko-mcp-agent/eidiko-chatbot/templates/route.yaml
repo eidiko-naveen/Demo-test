@@ -1,0 +1,40 @@
+{{- if .Values.route.enabled }}
+
+apiVersion: route.openshift.io/v1
+kind: Route
+
+metadata:
+  name: {{ include "eidiko-chatbot.fullname" . }}
+
+  labels:
+    {{- include "eidiko-chatbot.labels" . | nindent 4 }}
+
+spec:
+
+  {{- if .Values.route.host }}
+
+  host: {{ .Values.route.host }}
+
+  {{- end }}
+
+  to:
+
+    kind: Service
+
+    name: {{ include "eidiko-chatbot.fullname" . }}
+
+  port:
+
+    targetPort: http
+
+  {{- if .Values.route.tls.enabled }}
+
+  tls:
+
+    termination: edge
+
+    insecureEdgeTerminationPolicy: Redirect
+
+  {{- end }}
+
+{{- end }}

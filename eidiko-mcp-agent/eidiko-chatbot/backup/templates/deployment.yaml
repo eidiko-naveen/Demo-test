@@ -1,0 +1,165 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: {{ include "eidiko-chatbot.fullname" . }}
+
+  labels:
+    {{- include "eidiko-chatbot.labels" . | nindent 4 }}
+
+spec:
+
+  replicas: {{ .Values.replicaCount }}
+
+  selector:
+    matchLabels:
+      {{- include "eidiko-chatbot.selectorLabels" . | nindent 6 }}
+
+  template:
+
+    metadata:
+      labels:
+        {{- include "eidiko-chatbot.selectorLabels" . | nindent 8 }}
+
+    spec:
+
+      # ======================================================
+      # OpenShift assigns the runtime UID
+      # ======================================================
+
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+
+      # ======================================================
+      # Container
+      # ======================================================
+
+      containers:
+
+        - name: eidiko-chatbot
+
+          # ==================================================
+          # C07 - Approved registry
+          # ==================================================
+
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          # ==================================================
+          # C14 - Application port
+          # ==================================================
+
+          ports:
+
+            - name: http
+              containerPort: {{ .Values.containerPort }}
+              protocol: TCP
+
+          # ==================================================
+          # C12 + C13
+          # Environment variables from ConfigMap
+          # ==================================================
+
+          envFrom:
+
+            - configMapRef:
+                name: {{ include "eidiko-chatbot.fullname" . }}-config
+
+          # ==================================================
+          # C11 - Secret
+          # ==================================================
+
+          env:
+
+            - name: ANTHROPIC_API_KEY
+
+              valueFrom:
+
+                secretKeyRef:
+                  name: {{ .Values.secret.existingSecret }}
+                  key: ANTHROPIC_API_KEY
+
+          # ==================================================
+          # Security
+          # ==================================================
+
+          securityContext:
+
+            allowPrivilegeEscalation: {{ .Values.containerSecurityContext.allowPrivilegeEscalation }}
+
+            capabilities:
+              {{- toYaml .Values.containerSecurityContext.capabilities | nindent 14 }}
+
+            seccompProfile:
+              {{- toYaml .Values.containerSecurityContext.seccompProfile | nindent 14 }}
+
+          # ==================================================
+          # C19-C22 - Resources
+          # ==================================================
+
+          resources:
+
+            requests:
+              cpu: {{ .Values.resources.requests.cpu | quote }}
+              memory: {{ .Values.resources.requests.memory | quote }}
+
+            limits:
+              cpu: {{ .Values.resources.limits.cpu | quote }}
+              memory: {{ .Values.resources.limits.memory | quote }}
+
+          # ==================================================
+          # C18 - Startup probe
+          # ==================================================
+
+          {{- if .Values.probes.startup.enabled }}
+
+          startupProbe:
+
+            httpGet:
+              path: {{ .Values.probes.startup.path }}
+              port: {{ .Values.probes.startup.port }}
+
+            periodSeconds: {{ .Values.probes.startup.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.startup.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.startup.failureThreshold }}
+
+          {{- end }}
+
+          # ==================================================
+          # C17 - Readiness probe
+          # ==================================================
+
+          {{- if .Values.probes.readiness.enabled }}
+
+          readinessProbe:
+
+            httpGet:
+              path: {{ .Values.probes.readiness.path }}
+              port: {{ .Values.probes.readiness.port }}
+
+            initialDelaySeconds: {{ .Values.probes.readiness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.readiness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.readiness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.readiness.failureThreshold }}
+
+          {{- end }}
+
+          # ==================================================
+          # C16 - Liveness probe
+          # ==================================================
+
+          {{- if .Values.probes.liveness.enabled }}
+
+          livenessProbe:
+
+            httpGet:
+              path: {{ .Values.probes.liveness.path }}
+              port: {{ .Values.probes.liveness.port }}
+
+            initialDelaySeconds: {{ .Values.probes.liveness.initialDelaySeconds }}
+            periodSeconds: {{ .Values.probes.liveness.periodSeconds }}
+            timeoutSeconds: {{ .Values.probes.liveness.timeoutSeconds }}
+            failureThreshold: {{ .Values.probes.liveness.failureThreshold }}
+
+          {{- end }}

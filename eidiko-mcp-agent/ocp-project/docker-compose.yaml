@@ -1,0 +1,243 @@
+# ============================================================
+# OCP PROJECT - DOCKER COMPOSE
+# ============================================================
+#
+# Container / Docker Requirements:
+#
+# C04 - Dockerfile available
+# C05 - Docker Compose file available
+# C06 - Container image builds successfully
+# C08 - Runs as non-root, arbitrary UID
+# C09 - No privileged container required
+# C10 - No hardcoded credentials
+# C24 - Logs written to stdout/stderr
+# C25 - Graceful shutdown on SIGTERM
+#
+# ============================================================
+
+name: ocp-project
+
+services:
+
+  # ==========================================================
+  # C05 - Docker Compose service
+  # C06 - Build Docker image
+  # ==========================================================
+  ocp-project:
+
+    # ----------------------------------------------------------
+    # C04 - Dockerfile
+    # Dockerfile must exist in the project root.
+    # ----------------------------------------------------------
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    # ----------------------------------------------------------
+    # C06 - Container image
+    # ----------------------------------------------------------
+    image: ocp-project:1.0
+
+    container_name: ocp-project
+
+    # ----------------------------------------------------------
+    # Streamlit application port
+    #
+    # Host:      8501
+    # Container: 8501
+    # ----------------------------------------------------------
+    ports:
+      - "8501:8501"
+
+    # ==========================================================
+    # C10 - NO HARDCODED CREDENTIALS
+    #
+    # Secrets are loaded from .env.
+    #
+    # IMPORTANT:
+    # .env must NOT be committed to Git.
+    # ==========================================================
+    env_file:
+      - .env
+
+    environment:
+
+      # --------------------------------------------------------
+      # C24 - Python logs are immediately sent to stdout/stderr
+      # --------------------------------------------------------
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      PYTHONIOENCODING: "UTF-8"
+
+      # --------------------------------------------------------
+      # C08 - Writable locations for non-root user
+      # --------------------------------------------------------
+      HOME: /tmp
+      XDG_CACHE_HOME: /tmp/.cache
+
+      # --------------------------------------------------------
+      # Streamlit configuration
+      # --------------------------------------------------------
+      STREAMLIT_SERVER_HEADLESS: "true"
+      STREAMLIT_SERVER_ADDRESS: "0.0.0.0"
+      STREAMLIT_SERVER_PORT: "8501"
+
+      # --------------------------------------------------------
+      # PostgreSQL connection
+      #
+      # IMPORTANT:
+      # Inside Docker, use the service name "postgres".
+      # Do NOT use localhost.
+      # --------------------------------------------------------
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+
+      # --------------------------------------------------------
+      # Kubernetes configuration
+      # --------------------------------------------------------
+      KUBECONFIG_PATH: /var/run/ocp-monitor/kubeconfig
+
+    # ==========================================================
+    # C10 - KUBECONFIG IS PROVIDED AT RUNTIME
+    #
+    # It is NOT copied into the Docker image.
+    # Read-only mount.
+    # ==========================================================
+    volumes:
+
+      - ${KUBECONFIG_FILE:-./kubeconfig}:/var/run/ocp-monitor/kubeconfig:ro
+
+    # ==========================================================
+    # C08 - NON-ROOT USER
+    #
+    # Docker container does NOT run as root.
+    #
+    # LOCAL_UID can be changed from .env:
+    #
+    # LOCAL_UID=1000
+    #
+    # For testing:
+    #
+    # LOCAL_UID=1001
+    # ==========================================================
+    user: "${LOCAL_UID:-1000}:0"
+
+    # ==========================================================
+    # C09 - NO PRIVILEGED CONTAINER
+    #
+    # privileged: true is intentionally NOT used.
+    # ==========================================================
+
+    # ----------------------------------------------------------
+    # C09 - Prevent privilege escalation
+    # ----------------------------------------------------------
+    security_opt:
+      - no-new-privileges:true
+
+    # ----------------------------------------------------------
+    # C09 - Drop Linux capabilities
+    # ----------------------------------------------------------
+    cap_drop:
+      - ALL
+
+    # ==========================================================
+    # C24 - LOGGING
+    #
+    # Application must write logs to stdout/stderr.
+    #
+    # View logs:
+    #
+    # docker compose logs -f
+    # ==========================================================
+
+    # ==========================================================
+    # C25 - GRACEFUL SHUTDOWN
+    #
+    # Docker sends SIGTERM before stopping the container.
+    # Application gets 30 seconds to shut down cleanly.
+    # ==========================================================
+    stop_signal: SIGTERM
+    stop_grace_period: 30s
+
+    # ==========================================================
+    # Restart policy
+    # ==========================================================
+    restart: unless-stopped
+
+
+  # ==========================================================
+  # POSTGRESQL
+  #
+  # Required because the application connects to PostgreSQL.
+  # ==========================================================
+
+  postgres:
+
+    image: pgvector/pgvector:pg16
+
+    # ----------------------------------------------------------
+    # C10 - Database credentials come from .env
+    # ----------------------------------------------------------
+    environment:
+
+      POSTGRES_DB: ${POSTGRES_DB:-ocp_monitor}
+      POSTGRES_USER: ${POSTGRES_USER:-ocp_agent}
+
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in .env}
+
+    # ----------------------------------------------------------
+    # Persistent PostgreSQL storage
+    # ----------------------------------------------------------
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+    # ----------------------------------------------------------
+    # PostgreSQL port
+    #
+    # Host:
+    #   localhost:5437
+    #
+    # Container:
+    #   postgres:5432
+    #
+    # The application uses postgres:5432.
+    # ----------------------------------------------------------
+    ports:
+      - "127.0.0.1:${POSTGRES_PUBLISHED_PORT:-5437}:5432"
+
+    # ----------------------------------------------------------
+    # PostgreSQL health check
+    # ----------------------------------------------------------
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+    # ----------------------------------------------------------
+    # C09 - Security
+    # ----------------------------------------------------------
+    security_opt:
+      - no-new-privileges:true
+
+    # ----------------------------------------------------------
+    # C25 - Graceful shutdown
+    # ----------------------------------------------------------
+    stop_signal: SIGTERM
+    stop_grace_period: 30s
+
+    restart: unless-stopped
+
+
+# ============================================================
+# VOLUMES
+# ============================================================
+
+volumes:
+
+  # PostgreSQL persistent data
+  postgres-data:
