@@ -1,0 +1,74 @@
+services:
+
+  eidiko-mcp-agent:
+
+    # ========================================================
+    # C04 / C06 - Build Docker image
+    # ========================================================
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    image: naveeneidiko/eidiko-mcp-agent:1.0
+
+    container_name: eidiko-mcp-agent
+
+    # ========================================================
+    # C05 - Docker Compose
+    # C08 - Non-root container
+    # ========================================================
+
+    user: "1001"
+
+    # ========================================================
+    # Port 8501
+    # Host 8501 -> Container 8501
+    # ========================================================
+
+    ports:
+      - "8501:8501"
+
+    # ========================================================
+    # C10 - Configuration through environment variables
+    # No credentials hardcoded
+    # ========================================================
+
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONUNBUFFERED: "1"
+      PYTHONIOENCODING: "UTF-8"
+      HOME: "/tmp"
+      XDG_CACHE_HOME: "/tmp/.cache"
+      STREAMLIT_HOME: "/tmp/.streamlit"
+
+    # ========================================================
+    # C09 - Security
+    # No privileged container
+    # ========================================================
+
+    security_opt:
+      - no-new-privileges:true
+
+    # ========================================================
+    # Container restart policy
+    # ========================================================
+
+    restart: unless-stopped
+
+    # ========================================================
+    # Health check
+    # ========================================================
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health')"
+        ]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3

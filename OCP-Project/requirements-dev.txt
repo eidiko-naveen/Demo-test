@@ -1,5 +1,0 @@
-# Runtime dependencies
--r requirements.txt
-
-# Test runner
-pytest==8.3.4
