@@ -1,0 +1,27 @@
+services:
+  eidiko-chatbot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${HOST_PORT:-5000}:5000"
+    environment:
+      PORT: "5000"
+      HOST: "0.0.0.0"
+      FLASK_DEBUG: "0"
+      ALLOW_INSECURE_OAUTH: "${ALLOW_INSECURE_OAUTH:-1}"
+      GOOGLE_CREDENTIALS_FILE: "/run/secrets/google_credentials"
+      TOKEN_FILE: "/data/token.json"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+    volumes:
+      - eidiko-token-data:/data
+    secrets:
+      - google_credentials
+    restart: unless-stopped
+
+secrets:
+  google_credentials:
+    file: ${GOOGLE_CREDENTIALS_FILE:-./credentials/credentials.json}
+
+volumes:
+  eidiko-token-data:

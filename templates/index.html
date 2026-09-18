@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EIDIKO — AI Workspace Assistant</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">
+          <img src="{{ url_for('static', filename='logo.jpg') }}" alt="EIDIKO">
+        </div>
+        <div class="brand-copy">
+          <div class="brand-name">EIDIKO</div>
+          <div class="brand-subtitle">AI Workspace Assistant</div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="connection-pill" id="connection-pill">
+          <span class="status-dot"></span>
+          <span class="status-text">Not connected</span>
+        </div>
+        <button id="connect-btn" class="btn btn-primary">Connect Google</button>
+        <button id="disconnect-btn" class="btn btn-secondary" disabled>Disconnect</button>
+      </div>
+    </header>
+
+    <main id="messages" class="chat-area">
+      <section class="welcome-card" aria-label="EIDIKO welcome">
+        <div class="welcome-icon">✦</div>
+        <div>
+          <div class="eyebrow">EIDIKO AI ASSISTANT</div>
+          <h1>What can I help you find?</h1>
+          <p>Search Gmail, Drive and Calendar in one place. Ask naturally and EIDIKO will guide you through confirmations for actions.</p>
+          <div class="capability-row">
+            <span class="capability"><span>✉</span> Gmail</span>
+            <span class="capability"><span>▣</span> Drive</span>
+            <span class="capability"><span>◷</span> Calendar</span>
+            <span class="capability"><span>✓</span> Google Meet</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="msg bot welcome-message">Hi! I'm your EIDIKO Chatbot. Connect your Google account and ask me to find emails, files, calendar events, or help with approved actions.</div>
+    </main>
+
+    <div class="notice">
+      <div class="notice-inner">
+        <span class="notice-item"><span class="notice-dot"></span> Gmail search</span>
+        <span class="notice-separator">•</span>
+        <span class="notice-item">Gmail sends require confirmation</span>
+        <span class="notice-separator">•</span>
+        <span class="notice-item">Calendar read-only</span>
+        <span class="notice-separator">•</span>
+        <span class="notice-item">Drive changes require confirmation</span>
+        <span class="notice-separator">•</span>
+        <span class="notice-item">Runs locally</span>
+      </div>
+    </div>
+
+    <footer class="composer-area">
+      <form id="chat-form" class="composer">
+        <div class="input-wrap">
+          <span class="input-icon">⌕</span>
+          <input id="chat-input" type="text" placeholder="Ask about emails, files, or your calendar…" autocomplete="off" aria-label="Message">
+        </div>
+        <button type="submit" class="send-btn">
+          <span>Send</span>
+          <span class="send-icon">↗</span>
+        </button>
+      </form>
+      <div class="composer-hint">Press Enter to send · EIDIKO keeps action confirmations explicit</div>
+    </footer>
+  </div>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

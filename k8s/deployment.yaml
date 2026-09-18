@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: eidiko-chatbot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: eidiko-chatbot
+  template:
+    metadata:
+      labels:
+        app: eidiko-chatbot
+    spec:
+      containers:
+        - name: eidiko-chatbot
+          image: <APPROVED_REGISTRY>/eidiko-chatbot:<TAG>
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 5000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: eidiko-chatbot-config
+          env:
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: eidiko-chatbot-secrets
+                  key: ANTHROPIC_API_KEY
+          volumeMounts:
+            - name: google-credentials
+              mountPath: /etc/eidiko/google
+              readOnly: true
+            - name: token-data
+              mountPath: /data
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 24
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 2
+            failureThreshold: 3
+      volumes:
+        - name: google-credentials
+          secret:
+            secretName: eidiko-chatbot-secrets
+            items:
+              - key: google-credentials.json
+                path: credentials.json
+        - name: token-data
+          persistentVolumeClaim:
+            claimName: eidiko-chatbot-token
