@@ -1,0 +1,6 @@
+--2026-09-15 21:03:52--  https://github.com/qdrant/qdrant/releases/download/v1.19.1/qdrant-1.19.1-linux-amd64.tar.gz
+Resolving github.com (github.com)... 20.207.73.82
+Connecting to github.com (github.com)|20.207.73.82|:443... connected.
+HTTP request sent, awaiting response... 404 Not Found
+2026-09-15 21:03:52 ERROR 404: Not Found.
+

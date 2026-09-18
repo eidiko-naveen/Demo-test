@@ -2,22 +2,33 @@
 __pycache__/
 *.py[cod]
 *.pyo
-*.pyd
-*.egg-info/
+
+# Virtual environments
 .venv/
 venv/
+env/
+
+# Environment variables / secrets
 .env
 .env.*
 !.env.example
 
-# Project/runtime data
-.data/
-.pytest_cache/
-*.log
-wget-log
-X1.zip
-
-# OS/editor
-.DS_Store
-.idea/
+# IDE
 .vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+
+# Cache
+.cache/
+.pytest_cache/
+
+# Qdrant / local databases
+qdrant_storage/
+
+# Streamlit
+.streamlit/secrets.toml
