@@ -13,6 +13,15 @@ credentials/
 .env.*
 !.env.example
 
+<<<<<<< Updated upstream
 # OAuth credentials
 credentials/
 **/credentials/
+=======
+# Session audit logs or local data
+data/
+*.log
+eidiko_mcp_audit_log.json
+*.zip
+
+>>>>>>> Stashed changes
