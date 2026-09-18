@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Enterprise RAG Platform
 
 Modular monolith foundation for an enterprise retrieval-augmented generation platform with FastAPI, LangGraph, Qdrant, PostgreSQL, Groq, and Streamlit.
@@ -75,3 +76,6 @@ Development authentication uses `AUTH_MODE=mock` with optional `X-User-Id` and `
 Conversation list, create, get, and archive routes use FastAPI dependency injection with lazy SQLAlchemy sessions. Importing the application does not require a live PostgreSQL connection; database access begins when a persistence endpoint is invoked.
 
 Future phases add persistence, ingestion, retrieval, LangGraph orchestration, agents, memory implementations, API resources, and enterprise monitoring incrementally.
+=======
+# Demo-test
+>>>>>>> 05914fdbc974380648171701ee90a3792ffac575

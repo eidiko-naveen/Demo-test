@@ -1,0 +1,33 @@
+# ============================================================
+# EIDIKO Internal Assistant — PersistentVolumeClaim
+# Control: C20
+#
+# Application Metadata (DevOps requirement):
+#   app-name        : EIDIKO Internal Assistant
+#   app-owner       : Sumith
+#   business-criticality: High (P2)
+# ============================================================
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: eidiko-token-pvc
+  namespace: eidiko
+  labels:
+    app: eidiko-chatbot
+    component: storage
+    # ── DevOps Required Metadata ──────────────────────────
+    app-name: "EIDIKO-Internal-Assistant"
+    app-owner: "Sumith"
+    business-criticality: "High-P2"
+  annotations:
+    app-name: "EIDIKO Internal Assistant"
+    app-owner: "Sumith"
+    business-criticality: "High (P2)"
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp2
+  resources:
+    requests:
+      storage: 100Mi

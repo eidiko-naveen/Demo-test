@@ -1,0 +1,35 @@
+# ============================================================
+# EIDIKO Internal Assistant — ConfigMap
+# Controls: C09, C10, C11, C12
+#
+# Application Metadata (DevOps requirement):
+#   app-name        : EIDIKO Internal Assistant
+#   app-owner       : Sumith
+#   business-criticality: High (P2)
+# ============================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eidiko-config
+  namespace: eidiko
+  labels:
+    app: eidiko-chatbot
+    component: config
+    # ── DevOps Required Metadata ──────────────────────────
+    app-name: "EIDIKO-Internal-Assistant"
+    app-owner: "Sumith"
+    business-criticality: "High-P2"
+  annotations:
+    app-name: "EIDIKO Internal Assistant"
+    app-owner: "Sumith"
+    business-criticality: "High (P2)"
+data:
+  PORT: "8080"
+  GUNICORN_WORKERS: "2"
+  GUNICORN_TIMEOUT: "30"
+  LOG_LEVEL: "info"
+  FLASK_DEBUG: "false"
+  MAX_RESULTS: "20"
+  GOOGLE_CREDENTIALS_PATH: "/app/credentials/credentials.json"
+  GOOGLE_TOKEN_PATH: "/app/data/token.json"

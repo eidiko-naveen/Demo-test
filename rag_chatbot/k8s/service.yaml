@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: enterprise-rag
+  labels:
+    app.kubernetes.io/name: enterprise-rag
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: enterprise-rag
+  ports:
+    - name: http
+      port: 8501
+      targetPort: http
+      protocol: TCP

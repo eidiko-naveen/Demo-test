@@ -1,0 +1,37 @@
+# ============================================================
+# C10 - DO NOT COPY SECRETS INTO DOCKER IMAGE
+# ============================================================
+
+# Environment files
+.env
+.env.*
+*.env
+
+# Kubernetes configuration
+kubeconfig
+kubeconfig.*
+.config
+.kube/
+
+# Credentials
+credentials/
+credentials.json
+token.json
+*.key
+*.pem
+*.crt
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Git
+.git/
+.gitignore
+
+# Tests / local files
+.pytest_cache/
+
+# Backup files
+backup/

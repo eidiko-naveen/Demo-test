@@ -1,0 +1,14 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: ocp-monitor-dashboard
+  namespace: ocp-monitor
+spec:
+  to:
+    kind: Service
+    name: ocp-monitor-dashboard
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

@@ -1,0 +1,58 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ocp-monitor-config
+  namespace: ocp-monitor
+data:
+  LLM_MODEL: openai/gpt-oss-120b
+  LLM_TEMPERATURE: "0"
+  LLM_MAX_TOKENS: "4096"
+  KUBECONFIG_PATH: ""
+  OCP_CONTEXT: ""
+  CLUSTER_NAME: OCP-PROD
+  REQUIRE_OPENSHIFT: "true"
+  POSTGRES_HOST: postgresql
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: ocp_monitor
+  POSTGRES_USER: ocp_agent
+  EMAIL_BACKEND: smtp
+  EMAIL_ENABLED: "false"
+  EMAIL_FROM: ocp-monitor@company.com
+  EMAIL_TO: '["ops@company.com"]'
+  EMAIL_ON_HEALTHY: "false"
+  EMAIL_ON_COLLECTION_ERROR: "true"
+  SMTP_HOST: smtp.company.com
+  SMTP_PORT: "587"
+  SMTP_USE_TLS: "true"
+  INTERVAL_MINUTES: "15"
+  TIMEZONE: Asia/Kolkata
+  SCHEDULER_HEALTH_FILE: /tmp/ocp-monitor/heartbeat
+  HEALTHCHECK_MAX_AGE_SECONDS: "1800"
+  NODE_CPU_THRESHOLD: "80"
+  NODE_MEMORY_THRESHOLD: "80"
+  CERT_EXPIRY_WARNING_DAYS: "30"
+  MONITORED_NAMESPACES: openshift-etcd,openshift-kube-apiserver,openshift-kube-controller-manager,openshift-kube-scheduler,openshift-ingress,openshift-storage,cp4i,ibm-common-services,cms,eidiko-chatbot
+  CP4I_HEALTH_ENDPOINTS: ""
+  EMBEDDING_MODEL: BAAI/bge-small-en-v1.5
+  RAG_TOP_K: "3"
+  ESCALATION_ENABLED: "false"
+  ESCALATION_COMPONENTS: cp4i
+  ESCALATION_CONSECUTIVE_CYCLES: "2"
+  ESCALATION_OWNERS_FILE: /etc/ocp-monitor/escalation_owners.json
+  ESCALATION_FALLBACK_OWNERS: '["ops-oncall@company.com"]'
+  ESCALATION_MEETING_DURATION_MINUTES: "30"
+  GOOGLE_CALENDAR_ID: primary
+  # Safe initial state: workflow enabled, cluster execution disabled.
+  HITL_ENABLED: "true"
+  HITL_EXECUTION_ENABLED: "false"
+  HITL_ALLOWED_NAMESPACE: eidiko-chatbot
+  HITL_ALLOWED_DEPLOYMENT: bankingchatbot
+  HITL_APPROVER_EMAIL: yash.eidiko@gmail.com
+  HITL_DASHBOARD_URL: ""
+  HITL_POLL_SECONDS: "30"
+  HITL_ROLLOUT_TIMEOUT_SECONDS: "180"
+  DASHBOARD_HOST: 0.0.0.0
+  DASHBOARD_PORT: "8501"
+  DASHBOARD_HISTORY_LIMIT: "20"
+  LOG_LEVEL: INFO
+  LOG_FORMAT: json
