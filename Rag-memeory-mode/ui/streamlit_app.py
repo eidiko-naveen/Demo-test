@@ -456,14 +456,14 @@ with st.sidebar:
         st.session_state.memory_test_prompt = test_prompt
         st.rerun()
 
-    st.markdown("#### � Memory Test Matrix")
+    st.markdown("#### 🧠 Memory Test Matrix")
     for mode_name, details in MEMORY_TEST_MATRIX.items():
         mode_label = next((label for label, value in MEMORIES.items() if value == mode_name), mode_name)
         with st.expander(f"{mode_label}", expanded=(mode_name == selected_memory)):
             st.write(details["prompt"])
             st.caption(details["expectation"])
 
-    st.markdown("#### �🧠 Memory State Preview")
+    st.markdown("#### 🧠 Memory State Preview")
     snapshot = st.session_state.memory_snapshot.get(selected_memory, {})
     if snapshot:
         st.caption(f"Last update: {snapshot.get('updated_at', 'unknown')}")

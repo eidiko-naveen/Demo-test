@@ -24,3 +24,16 @@ def test_production_defaults_use_container_service_hosts() -> None:
 
     assert settings.qdrant_url == "http://qdrant:6333"
     assert settings.database_url.endswith("@postgres:5432/enterprise_rag")
+
+
+def test_huggingface_cache_uses_writable_local_directory(monkeypatch, tmp_path) -> None:
+    target_dir = tmp_path / ".cache" / "huggingface"
+    monkeypatch.setenv("HF_HOME", str(target_dir))
+
+    from app.rag.embeddings import _resolve_huggingface_cache_dir
+
+    resolved = _resolve_huggingface_cache_dir()
+
+    assert resolved == str(target_dir)
+    assert target_dir.exists()
+    assert target_dir.is_dir()
