@@ -10,3 +10,5 @@ __pycache__/
 .coverage
 htmlcov/
 deploy/secrets.env
+.venv/
+__pycache__/
