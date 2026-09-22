@@ -13,7 +13,10 @@ cfg = get_settings()
 
 def _load_kube():
     if cfg.kubeconfig_path:
-        config.load_kube_config(config_file=cfg.kubeconfig_path)
+        config.load_kube_config(
+            config_file=cfg.kubeconfig_path,
+            context=cfg.ocp_context,
+        )
     else:
         config.load_incluster_config()
 
@@ -220,8 +223,8 @@ def get_pvc_issues() -> List[Dict[str, Any]]:
                             "capacity": str(pvc.spec.resources.requests.get("storage", "")) if pvc.spec.resources else "",
                             "terminating": bool(pvc.metadata.deletion_timestamp),
                         })
-            except Exception:
-                continue
+            except Exception as exc:
+                result.append({"namespace": ns, "error": str(exc)})
         return result
     except Exception as e:
         return [{"error": str(e)}]
@@ -308,8 +311,8 @@ def get_failing_pods() -> List[Dict[str, Any]]:
                             "phase": phase,
                             "containers": containers,
                         })
-            except Exception:
-                continue
+            except Exception as exc:
+                result.append({"namespace": ns, "error": str(exc)})
         return result
     except Exception as e:
         return [{"error": str(e)}]
@@ -358,8 +361,8 @@ def get_expiring_certs() -> List[Dict[str, Any]]:
                             })
                     except Exception:
                         continue
-            except Exception:
-                continue
+            except Exception as exc:
+                result.append({"namespace": ns, "error": str(exc)})
         return result
     except Exception as e:
         return [{"error": str(e)}]
@@ -378,34 +381,35 @@ def check_cp4i_endpoints() -> List[Dict[str, Any]]:
         custom = client.CustomObjectsApi()
         result = []
 
-        # Check PlatformNavigator CR status
-        try:
-            navigators = custom.list_namespaced_custom_object(
-                group="integration.ibm.com",
-                version="v1beta2",
-                namespace="cp4i",
-                plural="platformnavigators"
-            )
-            for nav in navigators.get("items", []):
-                name = nav["metadata"]["name"]
-                conditions = nav.get("status", {}).get("conditions", [])
-                ready = any(
-                    c.get("type") == "Ready" and c.get("status") == "True"
-                    for c in conditions
+        if cfg.cp4i_platform_navigator_enabled:
+            # Check PlatformNavigator CR status
+            try:
+                navigators = custom.list_namespaced_custom_object(
+                    group="integration.ibm.com",
+                    version="v1beta2",
+                    namespace="cp4i",
+                    plural="platformnavigators"
                 )
-                message = next(
-                    (c.get("message", "") for c in conditions
-                     if c.get("type") == "Ready" and c.get("status") != "True"),
-                    ""
-                )
-                result.append({
-                    "name": name,
-                    "kind": "PlatformNavigator",
-                    "healthy": ready,
-                    "message": message[:200] if message else "",
-                })
-        except Exception:
-            pass
+                for nav in navigators.get("items", []):
+                    name = nav["metadata"]["name"]
+                    conditions = nav.get("status", {}).get("conditions", [])
+                    ready = any(
+                        c.get("type") == "Ready" and c.get("status") == "True"
+                        for c in conditions
+                    )
+                    message = next(
+                        (c.get("message", "") for c in conditions
+                         if c.get("type") == "Ready" and c.get("status") != "True"),
+                        ""
+                    )
+                    result.append({
+                        "name": name,
+                        "kind": "PlatformNavigator",
+                        "healthy": ready,
+                        "message": message[:200] if message else "",
+                    })
+            except Exception as exc:
+                result.append({"kind": "PlatformNavigator", "error": str(exc)})
 
         # Check configured HTTP endpoints if any
         for url in cfg.cp4i_endpoints_list:

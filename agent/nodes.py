@@ -68,8 +68,8 @@ def _now_utc() -> str:
 
 def _is_error_response(data: Any) -> bool:
     """True if a tool returned an error dict/list instead of real data."""
-    if isinstance(data, list) and len(data) == 1 and "error" in data[0]:
-        return True
+    if isinstance(data, list):
+        return any(isinstance(item, dict) and "error" in item for item in data)
     if isinstance(data, dict) and "error" in data:
         return True
     return False
@@ -77,7 +77,8 @@ def _is_error_response(data: Any) -> bool:
 
 def _extract_error(data: Any) -> str:
     if isinstance(data, list) and data:
-        return data[0].get("error", "unknown error")
+        return "; ".join(str(item["error"]) for item in data
+                         if isinstance(item, dict) and "error" in item)
     if isinstance(data, dict):
         return data.get("error", "unknown error")
     return "unknown error"
@@ -256,6 +257,12 @@ def analyze_node(state: ClusterState) -> Dict:
     try:
         from agent.llm_chains import run_analysis
         failures, summary = run_analysis(state)
+        if state.get("collection_errors") and not failures:
+            summary = (
+                "Monitoring incomplete: collection failed for "
+                + ", ".join(state["collection_errors"])
+                + ". No failures identified in the available telemetry; manual review required."
+            )
         for f in failures:
             f["severity"] = assign_severity(f)
         log.info(
@@ -270,6 +277,7 @@ def analyze_node(state: ClusterState) -> Dict:
         return {
             "failures": [],
             "summary": f"Analysis failed: {str(exc)}. Manual review required.",
+            "analysis_error": str(exc),
         }
 
 
@@ -855,7 +863,9 @@ def save_run_node(state: ClusterState) -> Dict:
         else:
             status = "HEALTHY"
 
-        collection_errors = state.get("collection_errors", {})
+        collection_errors = dict(state.get("collection_errors", {}))
+        if state.get("analysis_error"):
+            collection_errors["analysis"] = state["analysis_error"]
         if collection_errors:
             status = "ERROR" if status == "HEALTHY" else status
 
@@ -936,13 +946,13 @@ def send_email_node(state: ClusterState) -> Dict:
     """
     failures = state.get("failures", [])
     collection_errors = state.get("collection_errors", {})
-    is_healthy = len(failures) == 0
+    is_healthy = not failures and not collection_errors and not state.get("analysis_error")
 
     if not cfg.email_enabled:
         log.info("node_skip", node="send_email", reason="email_disabled")
         return {"email_sent": False}
 
-    if collection_errors and is_healthy and not cfg.email_on_collection_error:
+    if collection_errors and not failures and not cfg.email_on_collection_error:
         log.info(
             "node_skip",
             node="send_email",
@@ -966,6 +976,8 @@ def send_email_node(state: ClusterState) -> Dict:
             status_label = "🟡 WARNING"
         elif failures:
             status_label = "🟡 WARNING"
+        elif state.get("analysis_error"):
+            status_label = "🔴 ANALYSIS ERROR"
         elif collection_errors:
             status_label = "🔴 COLLECTION ERROR"
         else:

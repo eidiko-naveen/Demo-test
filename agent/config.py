@@ -171,6 +171,10 @@ class Settings(BaseSettings):
         default="",
         description="Comma-separated CP4I HTTP health-check URLs.",
     )
+    cp4i_platform_navigator_enabled: bool = Field(
+        default=True,
+        description="Check PlatformNavigator resources; disable when CP4I is not installed.",
+    )
 
     # ── LlamaIndex RAG ───────────────────────────────────────────────────────
     embedding_model: str = Field(

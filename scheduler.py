@@ -96,7 +96,7 @@ def _run_cycle_job() -> None:
             overall = "CRITICAL"
         elif "WARNING" in severities or failures:
             overall = "WARNING"
-        elif final_state.get("collection_errors"):
+        elif final_state.get("collection_errors") or final_state.get("analysis_error"):
             overall = "ERROR"
         else:
             overall = "HEALTHY"

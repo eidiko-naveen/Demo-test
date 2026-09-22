@@ -198,6 +198,8 @@ def _build_header(state: ClusterState) -> str:
         status_label, status_color, status_bg = "🔴 CRITICAL", _C["red"], _C["red_bg"]
     elif "WARNING" in severities or failures:
         status_label, status_color, status_bg = "🟡 WARNING", _C["amber"], _C["amber_bg"]
+    elif state.get("analysis_error"):
+        status_label, status_color, status_bg = "🔴 ANALYSIS ERROR", _C["red"], _C["red_bg"]
     elif state.get("collection_errors"):
         status_label, status_color, status_bg = "🔴 COLLECTION ERROR", _C["red"], _C["red_bg"]
     else:

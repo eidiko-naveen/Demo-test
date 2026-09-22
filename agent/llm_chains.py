@@ -124,12 +124,12 @@ def _is_cert_unhealthy(cert: Dict[str, Any]) -> bool:
     days = cert.get("days_remaining")
     if days is None:
         return False
-    return days < 30
+    return days <= cfg.cert_expiry_warning_days
 
 
 def _is_endpoint_unhealthy(ep: Dict[str, Any]) -> bool:
     """Return True if the CP4I endpoint returned a non-2xx status."""
-    if "error" in ep:
+    if "error" in ep or ep.get("healthy") is False:
         return True
     status = ep.get("status_code", 200)
     return status is None or status >= 400
@@ -139,8 +139,8 @@ def _is_etcd_unhealthy(etcd: Dict[str, Any]) -> bool:
     """Return True if etcd has any unhealthy members or errors."""
     if not etcd or "error" in etcd:
         return bool(etcd)
-    members = etcd.get("members") or []
-    return any(
+    members = etcd.get("endpoints") or etcd.get("members") or []
+    return etcd.get("healthy") is False or any(
         not m.get("healthy", True) for m in members
     ) or etcd.get("alarm_count", 0) > 0
 
@@ -245,6 +245,7 @@ def _trim_snapshot(state: ClusterState) -> Dict[str, Any]:
     snapshot = {
         "cluster_name":      state.get("cluster_name", cfg.cluster_name),
         "timestamp":         state.get("timestamp", ""),
+        "collection_errors": state.get("collection_errors", {}),
         # Healthy summaries (counts only — no token waste)
         "healthy_counts": {
             "nodes":      healthy_node_count,
@@ -433,8 +434,12 @@ def run_analysis(state: ClusterState) -> Tuple[List[Dict], str]:
 
         parsed = _extract_json(raw_response)
 
-        failures = parsed.get("failures", [])
-        summary = parsed.get("summary", "")
+        failures = parsed.get("failures")
+        summary = parsed.get("summary")
+        if not isinstance(failures, list) or not isinstance(summary, str):
+            raise ValueError("Analysis response must contain failures and summary")
+        if any(not isinstance(f, dict) for f in failures):
+            raise ValueError("Analysis failures must be objects")
 
         # Add detected_at if missing
         now = datetime.now(timezone.utc).isoformat()
@@ -452,7 +457,7 @@ def run_analysis(state: ClusterState) -> Tuple[List[Dict], str]:
 
     except Exception as exc:
         log.error("llm_analysis_failed", error=str(exc))
-        return [], f"LLM analysis failed: {str(exc)}"
+        raise
 
 
 # ──────────────────────────────────────────────────────────────────────────────

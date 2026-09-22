@@ -80,6 +80,7 @@ class ClusterState(TypedDict, total=False):
     # ── LLM Analysis ─────────────────────────────────────────────────────────
     failures: List[Dict[str, Any]]
     summary: str
+    analysis_error: str
 
     # ── LLM Resolution ───────────────────────────────────────────────────────
     resolutions: List[Dict[str, Any]]
@@ -132,6 +133,7 @@ def initial_state(timestamp: str, cluster_name: str) -> ClusterState:
         # LLM
         failures=[],
         summary="",
+        analysis_error="",
         resolutions=[],
         # RAG
         rag_results={},

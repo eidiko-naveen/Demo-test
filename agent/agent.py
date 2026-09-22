@@ -238,7 +238,7 @@ def run_cycle() -> ClusterState:
             overall = "CRITICAL"
         elif "WARNING" in severities or failures:
             overall = "WARNING"
-        elif final_state.get("collection_errors"):
+        elif final_state.get("collection_errors") or final_state.get("analysis_error"):
             overall = "ERROR"
         else:
             overall = "HEALTHY"
@@ -264,4 +264,6 @@ def run_cycle() -> ClusterState:
             exc_info=True,
         )
         # Return the partial state so callers don't get None
+        state["analysis_error"] = f"Monitoring cycle failed: {exc}"
+        state["summary"] = "Monitoring cycle failed. Manual review required."
         return state

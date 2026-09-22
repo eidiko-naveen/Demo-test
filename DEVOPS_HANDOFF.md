@@ -157,6 +157,16 @@ oc -n ocp-monitor get pods,service,route
 
 ## Recommended CI gates
 
+Install the test dependency set and run the local checks with:
+
+```bash
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
+python -m compileall -q agent scheduler.py run_streamlit.py get_google_refresh_token.py
+```
+
+Recommended release gates:
+
 1. Unit tests and Python compilation.
 2. Dependency consistency and vulnerability scan.
 3. Secret scanning.
