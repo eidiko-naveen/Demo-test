@@ -135,6 +135,19 @@ st.markdown(
         font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
+    [data-testid="stHeader"] {
+        background: transparent;
+    }
+
+    [data-testid="stDecoration"] {
+        display: none;
+    }
+
+    [data-testid="stToolbar"] {
+        visibility: hidden;
+        height: 0;
+    }
+
     [data-testid="stSidebar"] {
         background: rgba(11, 15, 25, 0.95);
         border-right: 1px solid var(--card-border);

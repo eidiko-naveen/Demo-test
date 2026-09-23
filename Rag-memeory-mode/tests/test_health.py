@@ -26,6 +26,19 @@ def test_production_defaults_use_container_service_hosts() -> None:
     assert settings.database_url.endswith("@postgres:5432/enterprise_rag")
 
 
+def test_kubernetes_runtime_treats_localhost_qdrant_as_production(monkeypatch) -> None:
+    monkeypatch.setenv("KUBERNETES_SERVICE_HOST", "10.0.0.1")
+    settings = Settings(app_env="development", qdrant_url="http://localhost:6333")
+
+    from app.vectorstore.qdrant import QdrantVectorStore
+
+    store = object.__new__(QdrantVectorStore)
+    store._production = store._is_production(settings)
+
+    assert store._production is True
+    assert store._resolve_qdrant_url(settings) == "http://qdrant:6333"
+
+
 def test_huggingface_cache_uses_writable_local_directory(monkeypatch, tmp_path) -> None:
     target_dir = tmp_path / ".cache" / "huggingface"
     monkeypatch.setenv("HF_HOME", str(target_dir))
